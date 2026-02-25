@@ -130,7 +130,8 @@ export default function PhysicsCanvas({
     );
 
     const containerWidth = size;
-    const goldRadius = containerWidth * 0.025;
+    const base = containerWidth;
+    const goldRadius = base * 0.03;
     const circleStartY = centerY - half + wallThickness + goldRadius * 2;
 
     const goldCircle = Bodies.circle(centerX, circleStartY, goldRadius, {
@@ -147,8 +148,8 @@ export default function PhysicsCanvas({
     const horizontalRange = size * 0.25;
     const density = 1.2;
 
-    // Square: ~15% of container width, sage green
-    const squareSize = containerWidth * 0.15;
+    // Square: side = base * 0.14, sage green
+    const squareSize = base * 0.14;
     const squareX = centerX + (Math.random() * 2 - 1) * horizontalRange;
     const squareBody = Bodies.rectangle(
       squareX,
@@ -166,9 +167,9 @@ export default function PhysicsCanvas({
     Body.setAngle(squareBody, (Math.random() - 0.5) * Math.PI * 0.5);
     dynamicBodies.push(squareBody);
 
-    // Bar: width ~25%, height ~6% (aspect 4:1 to 5:1), navy
-    const barWidth = containerWidth * 0.25;
-    const barHeight = containerWidth * 0.06;
+    // Bar: width = base * 0.40, height = base * 0.06, navy
+    const barWidth = base * 0.4;
+    const barHeight = base * 0.06;
     const barX = centerX + (Math.random() * 2 - 1) * horizontalRange;
     const barBody = Bodies.rectangle(barX, spawnBaseY, barWidth, barHeight, {
       restitution: 0.3,
@@ -180,8 +181,8 @@ export default function PhysicsCanvas({
     Body.setAngle(barBody, (Math.random() - 0.5) * Math.PI * 0.5);
     dynamicBodies.push(barBody);
 
-    // Triangle: equilateral, ~15% of container width, orange
-    const triRadius = containerWidth * 0.15;
+    // Triangle: circumradius = base * 0.16, orange
+    const triRadius = base * 0.16;
     const triX = centerX + (Math.random() * 2 - 1) * horizontalRange;
     const triVerts = [
       { x: triX + triRadius * Math.cos(-Math.PI / 2), y: spawnBaseY + triRadius * Math.sin(-Math.PI / 2) },
@@ -198,8 +199,8 @@ export default function PhysicsCanvas({
     Body.setAngle(triBody, (Math.random() - 0.5) * Math.PI * 0.5);
     dynamicBodies.push(triBody);
 
-    // Hexagon: regular, ~20% of container width (largest), light blue
-    const hexRadius = containerWidth * 0.2;
+    // Hexagon: circumradius = base * 0.24 (largest), light blue
+    const hexRadius = base * 0.24;
     const hexX = centerX + (Math.random() * 2 - 1) * horizontalRange;
     const hexVerts: { x: number; y: number }[] = [];
     for (let i = 0; i < 6; i += 1) {
