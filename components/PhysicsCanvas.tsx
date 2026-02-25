@@ -17,7 +17,7 @@ Matter.Common.setDecomp(decomp);
 const BACKGROUND_COLOR = "#FCFCFC";
 const GOLD_COLOR = "#F5C518";
 
-export type ContainerShape = "square" | "hexagon" | "triangle" | "pentagon";
+export type ContainerShape = "square" | "hexagon" | "circle";
 
 type PhysicsCanvasProps = {
   rotationSpeed: number;

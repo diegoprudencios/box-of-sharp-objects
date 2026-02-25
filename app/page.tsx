@@ -10,6 +10,7 @@ export default function Home() {
   const [shapeCount, setShapeCount] = useState(6);
   const [containerShape, setContainerShape] =
     useState<ContainerShape>("square");
+  const [isPlaying, setIsPlaying] = useState(true);
   const [resetKey, setResetKey] = useState(0);
 
   const handleReset = () => {
@@ -27,16 +28,6 @@ export default function Home() {
           </div>
 
           <div className="space-y-6 text-sm">
-            <div className="space-y-2">
-              <button
-                type="button"
-                onClick={handleReset}
-                className="w-full rounded-md bg-neutral-800 px-3 py-2 text-xs font-medium text-neutral-100 hover:bg-neutral-700 transition-colors"
-              >
-                Reset
-              </button>
-            </div>
-
             <div className="space-y-2">
               <label className="flex items-center justify-between text-xs text-neutral-300">
                 <span>Speed</span>
@@ -58,46 +49,73 @@ export default function Home() {
             </div>
 
             <div className="space-y-2">
-              <label className="flex items-center justify-between text-xs text-neutral-300">
-                <span>Shapes</span>
-                <span className="tabular-nums text-neutral-500">
-                  {shapeCount}
-                </span>
-              </label>
-              <input
-                type="range"
-                min={3}
-                max={10}
-                step={1}
-                value={shapeCount}
-                onChange={(e) =>
-                  setShapeCount(
-                    Math.min(
-                      10,
-                      Math.max(3, parseInt(e.target.value, 10) || 3)
-                    )
-                  )
-                }
-                className="w-full accent-neutral-100"
-              />
-            </div>
-
-            <div className="space-y-2">
               <label className="block text-xs text-neutral-300">
                 Container
               </label>
-              <select
-                value={containerShape}
-                onChange={(e) =>
-                  setContainerShape(e.target.value as ContainerShape)
-                }
-                className="w-full rounded-md bg-neutral-900 px-3 py-2 text-xs text-neutral-100 outline-none ring-0 focus:bg-neutral-800"
+              <div className="flex gap-2">
+                <button
+                  type="button"
+                  onClick={() => setContainerShape("square")}
+                  className={`flex flex-1 aspect-square items-center justify-center rounded-md bg-neutral-800 text-neutral-100 transition-colors hover:bg-neutral-700 ${
+                    containerShape === "square"
+                      ? "bg-neutral-600 ring-2 ring-neutral-400"
+                      : ""
+                  }`}
+                  aria-label="Square"
+                >
+                  <svg viewBox="0 0 24 24" className="h-6 w-6" fill="currentColor">
+                    <rect x="4" y="4" width="16" height="16" rx="1" />
+                  </svg>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setContainerShape("hexagon")}
+                  className={`flex flex-1 aspect-square items-center justify-center rounded-md bg-neutral-800 text-neutral-100 transition-colors hover:bg-neutral-700 ${
+                    containerShape === "hexagon"
+                      ? "bg-neutral-600 ring-2 ring-neutral-400"
+                      : ""
+                  }`}
+                  aria-label="Hexagon"
+                >
+                  <svg viewBox="0 0 24 24" className="h-6 w-6" fill="currentColor">
+                    <path d="M12 3 L19.79 7.5 L19.79 16.5 L12 21 L4.21 16.5 L4.21 7.5 Z" />
+                  </svg>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setContainerShape("circle")}
+                  className={`flex flex-1 aspect-square items-center justify-center rounded-md bg-neutral-800 text-neutral-100 transition-colors hover:bg-neutral-700 ${
+                    containerShape === "circle"
+                      ? "bg-neutral-600 ring-2 ring-neutral-400"
+                      : ""
+                  }`}
+                  aria-label="Circle"
+                >
+                  <svg viewBox="0 0 24 24" className="h-6 w-6" fill="currentColor">
+                    <circle cx="12" cy="12" r="10" />
+                  </svg>
+                </button>
+              </div>
+            </div>
+
+            <div className="space-y-2">
+              <button
+                type="button"
+                onClick={() => setIsPlaying((p) => !p)}
+                className="w-full rounded-md bg-neutral-800 px-3 py-2 text-xs font-medium text-neutral-100 hover:bg-neutral-700 transition-colors"
               >
-                <option value="square">Square</option>
-                <option value="hexagon">Hexagon</option>
-                <option value="triangle">Triangle</option>
-                <option value="pentagon">Pentagon</option>
-              </select>
+                {isPlaying ? "STOP" : "PLAY"}
+              </button>
+            </div>
+
+            <div className="space-y-2">
+              <button
+                type="button"
+                onClick={handleReset}
+                className="w-full rounded-md bg-neutral-800 px-3 py-2 text-xs font-medium text-neutral-100 hover:bg-neutral-700 transition-colors"
+              >
+                Reset
+              </button>
             </div>
           </div>
         </div>
@@ -105,7 +123,7 @@ export default function Home() {
 
       <section className="flex-1 h-screen">
         <PhysicsCanvas
-          rotationSpeed={rotationSpeed}
+          rotationSpeed={isPlaying ? rotationSpeed : 0}
           shapeCount={shapeCount}
           containerShape={containerShape}
           resetKey={resetKey}
