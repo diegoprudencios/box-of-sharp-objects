@@ -72,7 +72,7 @@ export default function PhysicsCanvas({
     const runner = Runner.create();
 
     const size =
-      containerShape === "hexagon"
+      containerShape === "hexagon" || containerShape === "circle"
         ? 0.75 * Math.min(width, height)
         : 0.6 * Math.min(width, height);
     const half = size / 2;
@@ -118,6 +118,42 @@ export default function PhysicsCanvas({
         baseAngles.push(wallAngle);
       }
       containerWalls = hexWalls;
+      wallOffsets = offsets;
+      wallBaseAngles = baseAngles;
+    } else if (containerShape === "circle") {
+      const circleSides = 90;
+      const circleWalls: Body[] = [];
+      const offsets: { x: number; y: number }[] = [];
+      const baseAngles: number[] = [];
+      const chordLength = 2 * half * Math.sin(Math.PI / circleSides);
+      for (let i = 0; i < circleSides; i += 1) {
+        const angle0 = -Math.PI / 2 + (i * 2 * Math.PI) / circleSides;
+        const angle1 = -Math.PI / 2 + ((i + 1) * 2 * Math.PI) / circleSides;
+        const midAngle = (angle0 + angle1) / 2;
+        const midDist = half * Math.cos(Math.PI / circleSides);
+        const wallX = centerX + midDist * Math.cos(midAngle);
+        const wallY = centerY + midDist * Math.sin(midAngle);
+        const wallAngle = midAngle + Math.PI / 2;
+        const wall = Bodies.rectangle(
+          wallX,
+          wallY,
+          chordLength,
+          wallThickness,
+          {
+            ...wallOptions,
+            angle: wallAngle,
+            friction: 1,
+            frictionStatic: 1,
+          }
+        );
+        circleWalls.push(wall);
+        offsets.push({
+          x: wall.position.x - centerX,
+          y: wall.position.y - centerY,
+        });
+        baseAngles.push(wallAngle);
+      }
+      containerWalls = circleWalls;
       wallOffsets = offsets;
       wallBaseAngles = baseAngles;
     } else {
@@ -175,6 +211,18 @@ export default function PhysicsCanvas({
         isSensor: true,
         render: { fillStyle: "#8B7EA8" },
       });
+    } else if (containerShape === "circle") {
+      const circleInnerRadius = half - wallThickness / 2;
+      backgroundBody = Bodies.circle(
+        centerX,
+        centerY,
+        circleInnerRadius,
+        {
+          isStatic: true,
+          isSensor: true,
+          render: { fillStyle: "#8B7EA8" },
+        }
+      );
     } else {
       const interiorSize = size - wallThickness;
       backgroundBody = Bodies.rectangle(
@@ -308,6 +356,24 @@ export default function PhysicsCanvas({
         Body.setPosition(wall, { x: rotatedX, y: rotatedY });
         Body.setAngle(wall, wallBaseAngles[idx] + angle);
       });
+
+      // Circle container: apply tangential force so shapes are dragged by spinning walls
+      if (containerShape === "circle") {
+        const bodies = Composite.allBodies(world);
+        for (const body of bodies) {
+          if (body.isStatic) continue;
+          const dx = body.position.x - centerX;
+          const dy = body.position.y - centerY;
+          const len = Math.sqrt(dx * dx + dy * dy) || 0.0001;
+          const magnitude = body.mass * rotationSpeed * 0.008;
+          const tx = -dy / len;
+          const ty = dx / len;
+          Body.applyForce(body, body.position, {
+            x: magnitude * tx,
+            y: magnitude * ty,
+          });
+        }
+      }
     });
 
       Render.run(render);
