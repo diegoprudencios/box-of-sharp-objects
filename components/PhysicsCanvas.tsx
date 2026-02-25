@@ -71,7 +71,10 @@ export default function PhysicsCanvas({
 
     const runner = Runner.create();
 
-    const size = 0.6 * Math.min(width, height);
+    const size =
+      containerShape === "hexagon"
+        ? 0.75 * Math.min(width, height)
+        : 0.6 * Math.min(width, height);
     const half = size / 2;
     const wallThickness = Math.max(20, size * 0.05);
 
@@ -85,49 +88,107 @@ export default function PhysicsCanvas({
       render: { fillStyle: "#FCFCFC" },
     } as const;
 
-    const topWall = Bodies.rectangle(
-      centerX,
-      centerY - half,
-      size,
-      wallThickness,
-      wallOptions
-    );
-    const bottomWall = Bodies.rectangle(
-      centerX,
-      centerY + half,
-      size,
-      wallThickness,
-      wallOptions
-    );
-    const leftWall = Bodies.rectangle(
-      centerX - half,
-      centerY,
-      wallThickness,
-      size,
-      wallOptions
-    );
-    const rightWall = Bodies.rectangle(
-      centerX + half,
-      centerY,
-      wallThickness,
-      size,
-      wallOptions
-    );
+    let containerWalls: Body[];
+    let wallOffsets: { x: number; y: number }[];
+    let wallBaseAngles: number[];
 
-    const containerWalls = [topWall, bottomWall, leftWall, rightWall];
+    if (containerShape === "hexagon") {
+      const hexWallThickness = wallThickness * 1.5;
+      const hexSideLength = half;
+      const hexWalls: Body[] = [];
+      const offsets: { x: number; y: number }[] = [];
+      const baseAngles: number[] = [];
+      for (let i = 0; i < 6; i += 1) {
+        const angle0 = -Math.PI / 2 + (i * Math.PI) / 3;
+        const angle1 = -Math.PI / 2 + ((i + 1) * Math.PI) / 3;
+        const midAngle = (angle0 + angle1) / 2;
+        const midDist = half * Math.cos(Math.PI / 6);
+        const wallX = centerX + midDist * Math.cos(midAngle);
+        const wallY = centerY + midDist * Math.sin(midAngle);
+        const wallAngle = midAngle + Math.PI / 2;
+        const wall = Bodies.rectangle(
+          wallX,
+          wallY,
+          hexSideLength,
+          hexWallThickness,
+          { ...wallOptions, angle: wallAngle }
+        );
+        hexWalls.push(wall);
+        offsets.push({ x: wall.position.x - centerX, y: wall.position.y - centerY });
+        baseAngles.push(wallAngle);
+      }
+      containerWalls = hexWalls;
+      wallOffsets = offsets;
+      wallBaseAngles = baseAngles;
+    } else {
+      const topWall = Bodies.rectangle(
+        centerX,
+        centerY - half,
+        size,
+        wallThickness,
+        wallOptions
+      );
+      const bottomWall = Bodies.rectangle(
+        centerX,
+        centerY + half,
+        size,
+        wallThickness,
+        wallOptions
+      );
+      const leftWall = Bodies.rectangle(
+        centerX - half,
+        centerY,
+        wallThickness,
+        size,
+        wallOptions
+      );
+      const rightWall = Bodies.rectangle(
+        centerX + half,
+        centerY,
+        wallThickness,
+        size,
+        wallOptions
+      );
+      containerWalls = [topWall, bottomWall, leftWall, rightWall];
+      wallOffsets = [
+        { x: 0, y: -half },
+        { x: 0, y: half },
+        { x: -half, y: 0 },
+        { x: half, y: 0 },
+      ];
+      wallBaseAngles = [0, 0, 0, 0];
+    }
 
-    const interiorSize = size - wallThickness;
-    const containerBackground = Bodies.rectangle(
-      centerX,
-      centerY,
-      interiorSize,
-      interiorSize,
-      {
+    let backgroundBody: Body;
+    if (containerShape === "hexagon") {
+      const hexInnerRadius = half - wallThickness / 2;
+      const hexBgVerts: { x: number; y: number }[] = [];
+      for (let i = 0; i < 6; i += 1) {
+        const a = -Math.PI / 2 + (i * Math.PI) / 3;
+        hexBgVerts.push({
+          x: centerX + hexInnerRadius * Math.cos(a),
+          y: centerY + hexInnerRadius * Math.sin(a),
+        });
+      }
+      backgroundBody = Bodies.fromVertices(centerX, centerY, [hexBgVerts], {
         isStatic: true,
         isSensor: true,
         render: { fillStyle: "#8B7EA8" },
-      }
-    );
+      });
+    } else {
+      const interiorSize = size - wallThickness;
+      backgroundBody = Bodies.rectangle(
+        centerX,
+        centerY,
+        interiorSize,
+        interiorSize,
+        {
+          isStatic: true,
+          isSensor: true,
+          render: { fillStyle: "#8B7EA8" },
+        }
+      );
+    }
 
     const containerWidth = size;
     const base = containerWidth;
@@ -221,7 +282,7 @@ export default function PhysicsCanvas({
     dynamicBodies.push(hexBody);
 
     Composite.add(world, [
-      containerBackground,
+      backgroundBody,
       ...containerWalls,
       ...dynamicBodies,
     ]);
@@ -233,26 +294,19 @@ export default function PhysicsCanvas({
     Events.on(engine, "beforeUpdate", () => {
       angle += angleStep;
 
-      Body.setPosition(containerBackground, { x: centerX, y: centerY });
-      Body.setAngle(containerBackground, angle);
+      Body.setPosition(backgroundBody, { x: centerX, y: centerY });
+      Body.setAngle(backgroundBody, angle);
 
       // Rotate each wall around the container center
-      const offsets = [
-        { x: 0, y: -half }, // top
-        { x: 0, y: half }, // bottom
-        { x: -half, y: 0 }, // left
-        { x: half, y: 0 }, // right
-      ];
-
       containerWalls.forEach((wall, idx) => {
-        const ox = offsets[idx].x;
-        const oy = offsets[idx].y;
+        const ox = wallOffsets[idx].x;
+        const oy = wallOffsets[idx].y;
         const rotatedX =
           centerX + ox * Math.cos(angle) - oy * Math.sin(angle);
         const rotatedY =
           centerY + ox * Math.sin(angle) + oy * Math.cos(angle);
         Body.setPosition(wall, { x: rotatedX, y: rotatedY });
-        Body.setAngle(wall, angle);
+        Body.setAngle(wall, wallBaseAngles[idx] + angle);
       });
     });
 
