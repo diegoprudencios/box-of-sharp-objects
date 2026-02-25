@@ -11,7 +11,7 @@ import {
   Events,
 } from "matter-js";
 
-const BACKGROUND_COLOR = "#0A0A0A";
+const BACKGROUND_COLOR = "#FCFCFC";
 const GOLD_COLOR = "#F5C518";
 
 export type ContainerShape = "square" | "hexagon" | "triangle" | "pentagon";
@@ -77,7 +77,7 @@ export default function PhysicsCanvas({
       isStatic: true,
       friction: 0.8,
       restitution: 0.1,
-      render: { fillStyle: "#1A1A1A" },
+      render: { fillStyle: "#FCFCFC" },
     } as const;
 
     const topWall = Bodies.rectangle(
@@ -111,7 +111,7 @@ export default function PhysicsCanvas({
 
     const containerWalls = [topWall, bottomWall, leftWall, rightWall];
 
-    const interiorSize = size - 2 * wallThickness;
+    const interiorSize = size - wallThickness;
     const containerBackground = Bodies.rectangle(
       centerX,
       centerY,
