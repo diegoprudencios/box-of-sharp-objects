@@ -24,6 +24,8 @@ type PhysicsCanvasProps = {
   shapeCount: number;
   containerShape: ContainerShape;
   resetKey: number;
+  isRunning: boolean;
+  rotationReversed: boolean;
 };
 
 export default function PhysicsCanvas({
@@ -33,8 +35,20 @@ export default function PhysicsCanvas({
   // to keep physics behavior identical for now.
   containerShape,
   resetKey,
+  isRunning,
+  rotationReversed,
 }: PhysicsCanvasProps) {
   const sceneRef = useRef<HTMLDivElement | null>(null);
+  const isRunningRef = useRef(isRunning);
+  const rotationReversedRef = useRef(rotationReversed);
+
+  useEffect(() => {
+    isRunningRef.current = isRunning;
+  }, [isRunning]);
+
+  useEffect(() => {
+    rotationReversedRef.current = rotationReversed;
+  }, [rotationReversed]);
 
   useEffect(() => {
     const element = sceneRef.current;
@@ -340,7 +354,11 @@ export default function PhysicsCanvas({
     const angleStep = rotationSpeed * (Math.PI / 180);
 
     Events.on(engine, "beforeUpdate", () => {
-      angle += angleStep;
+      if (!isRunningRef.current) {
+        return;
+      }
+
+      angle += rotationReversedRef.current ? -angleStep : angleStep;
 
       Body.setPosition(backgroundBody, { x: centerX, y: centerY });
       Body.setAngle(backgroundBody, angle);
@@ -360,12 +378,13 @@ export default function PhysicsCanvas({
       // Circle container: apply tangential force so shapes are dragged by spinning walls
       if (containerShape === "circle") {
         const bodies = Composite.allBodies(world);
+        const direction = rotationReversedRef.current ? -1 : 1;
         for (const body of bodies) {
           if (body.isStatic) continue;
           const dx = body.position.x - centerX;
           const dy = body.position.y - centerY;
           const len = Math.sqrt(dx * dx + dy * dy) || 0.0001;
-          const magnitude = body.mass * rotationSpeed * 0.008;
+          const magnitude = body.mass * rotationSpeed * 0.008 * direction;
           const tx = -dy / len;
           const ty = dx / len;
           Body.applyForce(body, body.position, {
