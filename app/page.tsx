@@ -22,7 +22,7 @@ export default function Home() {
         <div className="space-y-8">
           <div>
             <h1 className="text-xs tracking-[0.25em] text-neutral-500 uppercase">
-              LIFE IS HARD
+              LIFE IS A BOX FULL OF SHARP OBJECTS
             </h1>
           </div>
 

@@ -111,6 +111,19 @@ export default function PhysicsCanvas({
 
     const containerWalls = [topWall, bottomWall, leftWall, rightWall];
 
+    const interiorSize = size - 2 * wallThickness;
+    const containerBackground = Bodies.rectangle(
+      centerX,
+      centerY,
+      interiorSize,
+      interiorSize,
+      {
+        isStatic: true,
+        isSensor: true,
+        render: { fillStyle: "#8B7EA8" },
+      }
+    );
+
     const containerWidth = size;
     const minExtent = containerWidth * 0.08;
     const maxExtent = containerWidth * 0.15;
@@ -131,7 +144,6 @@ export default function PhysicsCanvas({
     const extraCount = clampedShapeCount;
     const spawnBaseY = centerY - half + wallThickness + minExtent * 1.2;
     const horizontalRange = size * 0.25;
-    const lightColors = ["#FFFFFF", "#CCCCCC"] as const;
 
     type ShapeKind = "rect" | "circle";
     const shapeKinds: ShapeKind[] = ["rect", "rect", "circle", "circle"];
@@ -153,21 +165,27 @@ export default function PhysicsCanvas({
       [extents[i], extents[j]] = [extents[j], extents[i]];
     }
 
+    let circleIndex = 0;
+    let rectIndex = 0;
+
     for (let i = 0; i < extraCount; i += 1) {
       const x = centerX + (Math.random() * 2 - 1) * horizontalRange;
       const y = spawnBaseY;
       const extent = extents[i];
       const density = 1.2 + Math.random() * 0.6;
-      const fillStyle = lightColors[Math.random() < 0.5 ? 0 : 1];
       let body: Body;
 
       if (shapeKinds[i] === "circle") {
+        const circleColor =
+          circleIndex === 0 ? "#8FBA8F" : "#ADD8E6"; // large vs small circle
+        circleIndex += 1;
+
         body = Bodies.circle(x, y, extent, {
           restitution: 0.3,
           friction: 0.6,
           frictionAir: 0.015,
           density,
-          render: { fillStyle: "#CCCCCC" },
+          render: { fillStyle: circleColor },
         });
       } else {
         const aspect = 0.5 + Math.random() * 1.5;
@@ -175,12 +193,19 @@ export default function PhysicsCanvas({
         const minDim = maxDim / aspect;
         const w = Math.random() < 0.5 ? maxDim : minDim;
         const h = w === maxDim ? minDim : maxDim;
+
+        let rectColor: string;
+        if (rectIndex === 0) rectColor = "#E8894A";
+        else if (rectIndex === 1) rectColor = "#2E4A8B";
+        else rectColor = rectIndex % 2 === 0 ? "#E8894A" : "#2E4A8B";
+        rectIndex += 1;
+
         body = Bodies.rectangle(x, y, w, h, {
           restitution: 0.3,
           friction: 0.7,
           frictionAir: 0.015,
           density: density * 1.1,
-          render: { fillStyle },
+          render: { fillStyle: rectColor },
         });
         Body.setAngle(body, (Math.random() - 0.5) * Math.PI * 0.5);
       }
@@ -188,7 +213,11 @@ export default function PhysicsCanvas({
       dynamicBodies.push(body);
     }
 
-    Composite.add(world, [...containerWalls, ...dynamicBodies]);
+    Composite.add(world, [
+      containerBackground,
+      ...containerWalls,
+      ...dynamicBodies,
+    ]);
 
     // Rotation state
     let angle = 0;
@@ -196,6 +225,9 @@ export default function PhysicsCanvas({
 
     Events.on(engine, "beforeUpdate", () => {
       angle += angleStep;
+
+      Body.setPosition(containerBackground, { x: centerX, y: centerY });
+      Body.setAngle(containerBackground, angle);
 
       // Rotate each wall around the container center
       const offsets = [
