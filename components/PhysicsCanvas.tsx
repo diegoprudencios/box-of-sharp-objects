@@ -14,7 +14,23 @@ import {
 const BACKGROUND_COLOR = "#0A0A0A";
 const GOLD_COLOR = "#F5C518";
 
-export default function PhysicsCanvas() {
+export type ContainerShape = "square" | "hexagon" | "triangle" | "pentagon";
+
+type PhysicsCanvasProps = {
+  rotationSpeed: number;
+  shapeCount: number;
+  containerShape: ContainerShape;
+  resetKey: number;
+};
+
+export default function PhysicsCanvas({
+  rotationSpeed,
+  shapeCount,
+  // containerShape is currently unused; square container is always used
+  // to keep physics behavior identical for now.
+  containerShape,
+  resetKey,
+}: PhysicsCanvasProps) {
   const sceneRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
@@ -64,10 +80,34 @@ export default function PhysicsCanvas() {
       render: { fillStyle: "#1A1A1A" },
     } as const;
 
-    const topWall = Bodies.rectangle(centerX, centerY - half, size, wallThickness, wallOptions);
-    const bottomWall = Bodies.rectangle(centerX, centerY + half, size, wallThickness, wallOptions);
-    const leftWall = Bodies.rectangle(centerX - half, centerY, wallThickness, size, wallOptions);
-    const rightWall = Bodies.rectangle(centerX + half, centerY, wallThickness, size, wallOptions);
+    const topWall = Bodies.rectangle(
+      centerX,
+      centerY - half,
+      size,
+      wallThickness,
+      wallOptions
+    );
+    const bottomWall = Bodies.rectangle(
+      centerX,
+      centerY + half,
+      size,
+      wallThickness,
+      wallOptions
+    );
+    const leftWall = Bodies.rectangle(
+      centerX - half,
+      centerY,
+      wallThickness,
+      size,
+      wallOptions
+    );
+    const rightWall = Bodies.rectangle(
+      centerX + half,
+      centerY,
+      wallThickness,
+      size,
+      wallOptions
+    );
 
     const containerWalls = [topWall, bottomWall, leftWall, rightWall];
 
@@ -87,7 +127,8 @@ export default function PhysicsCanvas() {
 
     const dynamicBodies: Body[] = [goldCircle];
 
-    const extraCount = 6 + Math.floor(Math.random() * 2);
+    const clampedShapeCount = Math.max(3, Math.min(10, shapeCount));
+    const extraCount = clampedShapeCount;
     const spawnBaseY = centerY - half + wallThickness + minExtent * 1.2;
     const horizontalRange = size * 0.25;
     const lightColors = ["#FFFFFF", "#CCCCCC"] as const;
@@ -97,22 +138,22 @@ export default function PhysicsCanvas() {
     while (shapeKinds.length < extraCount) {
       shapeKinds.push(Math.random() < 0.5 ? "rect" : "circle");
     }
-    for (let i = shapeKinds.length - 1; i > 0; i--) {
+    for (let i = shapeKinds.length - 1; i > 0; i -= 1) {
       const j = Math.floor(Math.random() * (i + 1));
       [shapeKinds[i], shapeKinds[j]] = [shapeKinds[j], shapeKinds[i]];
     }
 
     const extents: number[] = [];
-    for (let i = 0; i < extraCount; i++) {
+    for (let i = 0; i < extraCount; i += 1) {
       const t = extraCount === 1 ? 0.5 : i / (extraCount - 1);
       extents.push(minExtent + t * (maxExtent - minExtent));
     }
-    for (let i = extents.length - 1; i > 0; i--) {
+    for (let i = extents.length - 1; i > 0; i -= 1) {
       const j = Math.floor(Math.random() * (i + 1));
       [extents[i], extents[j]] = [extents[j], extents[i]];
     }
 
-    for (let i = 0; i < extraCount; i++) {
+    for (let i = 0; i < extraCount; i += 1) {
       const x = centerX + (Math.random() * 2 - 1) * horizontalRange;
       const y = spawnBaseY;
       const extent = extents[i];
@@ -151,24 +192,26 @@ export default function PhysicsCanvas() {
 
     // Rotation state
     let angle = 0;
-    const rotationSpeed = 0.3 * (Math.PI / 180); // 0.3 degrees per frame
+    const angleStep = rotationSpeed * (Math.PI / 180);
 
     Events.on(engine, "beforeUpdate", () => {
-      angle += rotationSpeed;
+      angle += angleStep;
 
       // Rotate each wall around the container center
       const offsets = [
-        { x: 0, y: -half },  // top
-        { x: 0, y: half },   // bottom
-        { x: -half, y: 0 },  // left
-        { x: half, y: 0 },   // right
+        { x: 0, y: -half }, // top
+        { x: 0, y: half }, // bottom
+        { x: -half, y: 0 }, // left
+        { x: half, y: 0 }, // right
       ];
 
       containerWalls.forEach((wall, idx) => {
         const ox = offsets[idx].x;
         const oy = offsets[idx].y;
-        const rotatedX = centerX + ox * Math.cos(angle) - oy * Math.sin(angle);
-        const rotatedY = centerY + ox * Math.sin(angle) + oy * Math.cos(angle);
+        const rotatedX =
+          centerX + ox * Math.cos(angle) - oy * Math.sin(angle);
+        const rotatedY =
+          centerY + ox * Math.sin(angle) + oy * Math.cos(angle);
         Body.setPosition(wall, { x: rotatedX, y: rotatedY });
         Body.setAngle(wall, angle);
       });
@@ -187,14 +230,14 @@ export default function PhysicsCanvas() {
       }
       (render.textures as Record<string, HTMLImageElement>) = {};
     };
-  }, []);
+  }, [rotationSpeed, shapeCount, containerShape, resetKey]);
 
   return (
     <div
       ref={sceneRef}
       style={{
-        width: "100vw",
-        height: "100vh",
+        width: "100%",
+        height: "100%",
         backgroundColor: BACKGROUND_COLOR,
         margin: 0,
         padding: 0,
