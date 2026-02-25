@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef } from "react";
-import {
+import Matter, {
   Engine,
   Render,
   Runner,
@@ -10,6 +10,9 @@ import {
   Body,
   Events,
 } from "matter-js";
+import decomp from "poly-decomp";
+
+Matter.Common.setDecomp(decomp);
 
 const BACKGROUND_COLOR = "#FCFCFC";
 const GOLD_COLOR = "#F5C518";
@@ -37,10 +40,12 @@ export default function PhysicsCanvas({
     const element = sceneRef.current;
     if (!element) return;
 
-    const width = window.innerWidth;
-    const height = window.innerHeight;
+    let cleanup: (() => void) | undefined;
+    const id = setTimeout(() => {
+      const width = element.offsetWidth;
+      const height = element.offsetHeight;
 
-    const engine = Engine.create();
+      const engine = Engine.create();
     const world = engine.world;
 
     engine.gravity.x = 0;
@@ -125,8 +130,6 @@ export default function PhysicsCanvas({
     );
 
     const containerWidth = size;
-    const minExtent = containerWidth * 0.08;
-    const maxExtent = containerWidth * 0.15;
     const goldRadius = containerWidth * 0.025;
     const circleStartY = centerY - half + wallThickness + goldRadius * 2;
 
@@ -140,78 +143,81 @@ export default function PhysicsCanvas({
 
     const dynamicBodies: Body[] = [goldCircle];
 
-    const clampedShapeCount = Math.max(3, Math.min(10, shapeCount));
-    const extraCount = clampedShapeCount;
-    const spawnBaseY = centerY - half + wallThickness + minExtent * 1.2;
+    const spawnBaseY = centerY - half + wallThickness + containerWidth * 0.12;
     const horizontalRange = size * 0.25;
+    const density = 1.2;
 
-    type ShapeKind = "rect" | "circle";
-    const shapeKinds: ShapeKind[] = ["rect", "rect", "circle", "circle"];
-    while (shapeKinds.length < extraCount) {
-      shapeKinds.push(Math.random() < 0.5 ? "rect" : "circle");
-    }
-    for (let i = shapeKinds.length - 1; i > 0; i -= 1) {
-      const j = Math.floor(Math.random() * (i + 1));
-      [shapeKinds[i], shapeKinds[j]] = [shapeKinds[j], shapeKinds[i]];
-    }
-
-    const extents: number[] = [];
-    for (let i = 0; i < extraCount; i += 1) {
-      const t = extraCount === 1 ? 0.5 : i / (extraCount - 1);
-      extents.push(minExtent + t * (maxExtent - minExtent));
-    }
-    for (let i = extents.length - 1; i > 0; i -= 1) {
-      const j = Math.floor(Math.random() * (i + 1));
-      [extents[i], extents[j]] = [extents[j], extents[i]];
-    }
-
-    let circleIndex = 0;
-    let rectIndex = 0;
-
-    for (let i = 0; i < extraCount; i += 1) {
-      const x = centerX + (Math.random() * 2 - 1) * horizontalRange;
-      const y = spawnBaseY;
-      const extent = extents[i];
-      const density = 1.2 + Math.random() * 0.6;
-      let body: Body;
-
-      if (shapeKinds[i] === "circle") {
-        const circleColor =
-          circleIndex === 0 ? "#8FBA8F" : "#ADD8E6"; // large vs small circle
-        circleIndex += 1;
-
-        body = Bodies.circle(x, y, extent, {
-          restitution: 0.3,
-          friction: 0.6,
-          frictionAir: 0.015,
-          density,
-          render: { fillStyle: circleColor },
-        });
-      } else {
-        const aspect = 0.5 + Math.random() * 1.5;
-        const maxDim = extent * 2;
-        const minDim = maxDim / aspect;
-        const w = Math.random() < 0.5 ? maxDim : minDim;
-        const h = w === maxDim ? minDim : maxDim;
-
-        let rectColor: string;
-        if (rectIndex === 0) rectColor = "#E8894A";
-        else if (rectIndex === 1) rectColor = "#2E4A8B";
-        else rectColor = rectIndex % 2 === 0 ? "#E8894A" : "#2E4A8B";
-        rectIndex += 1;
-
-        body = Bodies.rectangle(x, y, w, h, {
-          restitution: 0.3,
-          friction: 0.7,
-          frictionAir: 0.015,
-          density: density * 1.1,
-          render: { fillStyle: rectColor },
-        });
-        Body.setAngle(body, (Math.random() - 0.5) * Math.PI * 0.5);
+    // Square: ~15% of container width, sage green
+    const squareSize = containerWidth * 0.15;
+    const squareX = centerX + (Math.random() * 2 - 1) * horizontalRange;
+    const squareBody = Bodies.rectangle(
+      squareX,
+      spawnBaseY,
+      squareSize,
+      squareSize,
+      {
+        restitution: 0.3,
+        friction: 0.7,
+        frictionAir: 0.015,
+        density: density * 1.1,
+        render: { fillStyle: "#8FBA8F" },
       }
+    );
+    Body.setAngle(squareBody, (Math.random() - 0.5) * Math.PI * 0.5);
+    dynamicBodies.push(squareBody);
 
-      dynamicBodies.push(body);
+    // Bar: width ~25%, height ~6% (aspect 4:1 to 5:1), navy
+    const barWidth = containerWidth * 0.25;
+    const barHeight = containerWidth * 0.06;
+    const barX = centerX + (Math.random() * 2 - 1) * horizontalRange;
+    const barBody = Bodies.rectangle(barX, spawnBaseY, barWidth, barHeight, {
+      restitution: 0.3,
+      friction: 0.7,
+      frictionAir: 0.015,
+      density: density * 1.1,
+      render: { fillStyle: "#2E4A8B" },
+    });
+    Body.setAngle(barBody, (Math.random() - 0.5) * Math.PI * 0.5);
+    dynamicBodies.push(barBody);
+
+    // Triangle: equilateral, ~15% of container width, orange
+    const triRadius = containerWidth * 0.15;
+    const triX = centerX + (Math.random() * 2 - 1) * horizontalRange;
+    const triVerts = [
+      { x: triX + triRadius * Math.cos(-Math.PI / 2), y: spawnBaseY + triRadius * Math.sin(-Math.PI / 2) },
+      { x: triX + triRadius * Math.cos(-Math.PI / 2 + (2 * Math.PI) / 3), y: spawnBaseY + triRadius * Math.sin(-Math.PI / 2 + (2 * Math.PI) / 3) },
+      { x: triX + triRadius * Math.cos(-Math.PI / 2 + (4 * Math.PI) / 3), y: spawnBaseY + triRadius * Math.sin(-Math.PI / 2 + (4 * Math.PI) / 3) },
+    ];
+    const triBody = Bodies.fromVertices(triX, spawnBaseY, [triVerts], {
+      restitution: 0.3,
+      friction: 0.7,
+      frictionAir: 0.015,
+      density: density * 1.1,
+      render: { fillStyle: "#E8894A" },
+    });
+    Body.setAngle(triBody, (Math.random() - 0.5) * Math.PI * 0.5);
+    dynamicBodies.push(triBody);
+
+    // Hexagon: regular, ~20% of container width (largest), light blue
+    const hexRadius = containerWidth * 0.2;
+    const hexX = centerX + (Math.random() * 2 - 1) * horizontalRange;
+    const hexVerts: { x: number; y: number }[] = [];
+    for (let i = 0; i < 6; i += 1) {
+      const angle = (i * Math.PI) / 3 - Math.PI / 2;
+      hexVerts.push({
+        x: hexX + hexRadius * Math.cos(angle),
+        y: spawnBaseY + hexRadius * Math.sin(angle),
+      });
     }
+    const hexBody = Bodies.fromVertices(hexX, spawnBaseY, [hexVerts], {
+      restitution: 0.3,
+      friction: 0.7,
+      frictionAir: 0.015,
+      density: density * 1.1,
+      render: { fillStyle: "#ADD8E6" },
+    });
+    Body.setAngle(hexBody, (Math.random() - 0.5) * Math.PI * 0.5);
+    dynamicBodies.push(hexBody);
 
     Composite.add(world, [
       containerBackground,
@@ -249,18 +255,24 @@ export default function PhysicsCanvas({
       });
     });
 
-    Render.run(render);
-    Runner.run(runner, engine);
+      Render.run(render);
+      Runner.run(runner, engine);
+
+      cleanup = () => {
+        Render.stop(render);
+        Runner.stop(runner);
+        Composite.clear(world, false);
+        Engine.clear(engine);
+        if (render.canvas?.parentNode) {
+          render.canvas.parentNode.removeChild(render.canvas);
+        }
+        (render.textures as Record<string, HTMLImageElement>) = {};
+      };
+    }, 50);
 
     return () => {
-      Render.stop(render);
-      Runner.stop(runner);
-      Composite.clear(world, false);
-      Engine.clear(engine);
-      if (render.canvas?.parentNode) {
-        render.canvas.parentNode.removeChild(render.canvas);
-      }
-      (render.textures as Record<string, HTMLImageElement>) = {};
+      clearTimeout(id);
+      cleanup?.();
     };
   }, [rotationSpeed, shapeCount, containerShape, resetKey]);
 
