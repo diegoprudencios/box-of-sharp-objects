@@ -1,11 +1,10 @@
 # CLAUDE.md — Life Is A Box Full Of Sharp Objects
 
-Technical reference for Cursor. After every session that changes
-architecture, props, patterns, or constraints — update this file
-to reflect the change before ending the session.
+Technical reference for Cursor.
 
-When updating this file, always remind Diego to commit it:
-git add CLAUDE.md && git commit -m "docs: update CLAUDE.md"
+After every session that changes architecture, props, patterns, or constraints:
+1. Update this file to reflect the change
+2. Run: git add CLAUDE.md && git commit -m "docs: update CLAUDE.md" && git push origin main
 
 ---
 
