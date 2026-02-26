@@ -19,6 +19,16 @@ const GOLD_COLOR = "#F5C518";
 
 export type ContainerShape = "square" | "hexagon" | "circle";
 
+export type Palette = {
+  id: "original" | "ember" | "constructivist" | "glacier";
+  container: string;
+  square: string;
+  bar: string;
+  triangle: string;
+  hexagon: string;
+  background: string;
+};
+
 type PhysicsCanvasProps = {
   rotationSpeed: number;
   shapeCount: number;
@@ -26,6 +36,7 @@ type PhysicsCanvasProps = {
   resetKey: number;
   isRunning: boolean;
   rotationReversed: boolean;
+  palette: Palette;
 };
 
 export default function PhysicsCanvas({
@@ -37,11 +48,18 @@ export default function PhysicsCanvas({
   resetKey,
   isRunning,
   rotationReversed,
+  palette,
 }: PhysicsCanvasProps) {
   const sceneRef = useRef<HTMLDivElement | null>(null);
   const isRunningRef = useRef(isRunning);
   const rotationReversedRef = useRef(rotationReversed);
   const rotationSpeedRef = useRef(rotationSpeed);
+  const paletteRef = useRef<Palette>(palette);
+
+  const renderRef = useRef<Render | null>(null);
+  const backgroundBodyRef = useRef<Body | null>(null);
+  const containerWallsRef = useRef<Body[]>([]);
+  const dynamicBodiesRef = useRef<Body[]>([]);
 
   useEffect(() => {
     isRunningRef.current = isRunning;
@@ -54,6 +72,10 @@ export default function PhysicsCanvas({
   useEffect(() => {
     rotationSpeedRef.current = rotationSpeed;
   }, [rotationSpeed]);
+
+  useEffect(() => {
+    paletteRef.current = palette;
+  }, [palette]);
 
   useEffect(() => {
     const element = sceneRef.current;
@@ -70,6 +92,8 @@ export default function PhysicsCanvas({
     engine.gravity.x = 0;
     engine.gravity.y = 1;
 
+    const currentPalette = paletteRef.current;
+
     const render = Render.create({
       element,
       engine,
@@ -77,7 +101,7 @@ export default function PhysicsCanvas({
         width,
         height,
         wireframes: false,
-        background: BACKGROUND_COLOR,
+        background: currentPalette.background ?? BACKGROUND_COLOR,
       },
     });
 
@@ -104,7 +128,7 @@ export default function PhysicsCanvas({
       isStatic: true,
       friction: 0.8,
       restitution: 0.1,
-      render: { fillStyle: "#FCFCFC" },
+      render: { fillStyle: paletteRef.current.background ?? BACKGROUND_COLOR },
     } as const;
 
     let containerWalls: Body[];
@@ -225,34 +249,35 @@ export default function PhysicsCanvas({
           y: centerY + hexInnerRadius * Math.sin(a),
         });
       }
-      backgroundBody = Bodies.fromVertices(centerX, centerY, [hexBgVerts], {
-        isStatic: true,
-        isSensor: true,
-        render: { fillStyle: "#8B7EA8" },
-      });
-    } else if (containerShape === "circle") {
-      const circleInnerRadius = half - wallThickness / 2;
-      backgroundBody = Bodies.circle(
+      backgroundBody = Bodies.fromVertices(
         centerX,
         centerY,
-        circleInnerRadius,
+        [hexBgVerts],
         {
           isStatic: true,
           isSensor: true,
-          render: { fillStyle: "#8B7EA8" },
+          render: { fillStyle: currentPalette.container },
         }
       );
+    } else if (containerShape === "circle") {
+      const circleInnerRadius = half - wallThickness / 2;
+      backgroundBody = Bodies.circle(centerX, centerY, circleInnerRadius, {
+        isStatic: true,
+        isSensor: true,
+        render: { fillStyle: currentPalette.container },
+      });
     } else {
-      const interiorSize = size - wallThickness;
+      const interiorWidth = size - wallThickness;
+      const interiorHeight = size - wallThickness;
       backgroundBody = Bodies.rectangle(
         centerX,
         centerY,
-        interiorSize,
-        interiorSize,
+        interiorWidth,
+        interiorHeight,
         {
           isStatic: true,
           isSensor: true,
-          render: { fillStyle: "#8B7EA8" },
+          render: { fillStyle: currentPalette.container },
         }
       );
     }
@@ -289,7 +314,7 @@ export default function PhysicsCanvas({
         friction: 0.7,
         frictionAir: 0.015,
         density: density * 1.1,
-        render: { fillStyle: "#8FBA8F" },
+        render: { fillStyle: currentPalette.square },
       }
     );
     Body.setAngle(squareBody, (Math.random() - 0.5) * Math.PI * 0.5);
@@ -304,7 +329,7 @@ export default function PhysicsCanvas({
       friction: 0.7,
       frictionAir: 0.015,
       density: density * 1.1,
-      render: { fillStyle: "#2E4A8B" },
+        render: { fillStyle: currentPalette.bar },
     });
     Body.setAngle(barBody, (Math.random() - 0.5) * Math.PI * 0.5);
     dynamicBodies.push(barBody);
@@ -322,7 +347,7 @@ export default function PhysicsCanvas({
       friction: 0.7,
       frictionAir: 0.015,
       density: density * 1.1,
-      render: { fillStyle: "#E8894A" },
+        render: { fillStyle: currentPalette.triangle },
     });
     Body.setAngle(triBody, (Math.random() - 0.5) * Math.PI * 0.5);
     dynamicBodies.push(triBody);
@@ -343,7 +368,7 @@ export default function PhysicsCanvas({
       friction: 0.7,
       frictionAir: 0.015,
       density: density * 1.1,
-      render: { fillStyle: "#ADD8E6" },
+        render: { fillStyle: currentPalette.hexagon },
     });
     Body.setAngle(hexBody, (Math.random() - 0.5) * Math.PI * 0.5);
     dynamicBodies.push(hexBody);
@@ -353,6 +378,12 @@ export default function PhysicsCanvas({
       ...containerWalls,
       ...dynamicBodies,
     ]);
+
+    // Store references for palette updates without remounting
+    renderRef.current = render;
+    backgroundBodyRef.current = backgroundBody;
+    containerWallsRef.current = containerWalls;
+    dynamicBodiesRef.current = dynamicBodies;
 
     // Rotation state
     let angle = 0;
@@ -404,6 +435,11 @@ export default function PhysicsCanvas({
       Runner.run(runner, engine);
 
       cleanup = () => {
+        renderRef.current = null;
+        backgroundBodyRef.current = null;
+        containerWallsRef.current = [];
+        dynamicBodiesRef.current = [];
+
         Render.stop(render);
         Runner.stop(runner);
         Composite.clear(world, false);
@@ -420,6 +456,35 @@ export default function PhysicsCanvas({
       cleanup?.();
     };
   }, [shapeCount, containerShape, resetKey]);
+
+  // Apply palette changes without resetting physics
+  useEffect(() => {
+    const current = paletteRef.current;
+    const render = renderRef.current;
+    if (!render) return;
+
+    (render.options as any).background = current.background ?? BACKGROUND_COLOR;
+    if (render.canvas) {
+      render.canvas.style.backgroundColor = current.background ?? BACKGROUND_COLOR;
+    }
+
+    if (backgroundBodyRef.current) {
+      backgroundBodyRef.current.render.fillStyle = current.container;
+    }
+
+    containerWallsRef.current.forEach((wall) => {
+      wall.render.fillStyle = paletteRef.current.background;
+    });
+
+    const bodies = dynamicBodiesRef.current;
+    if (bodies.length > 1) {
+      // Index 0 is the gold circle; keep its color
+      if (bodies[1]) bodies[1].render.fillStyle = current.square;
+      if (bodies[2]) bodies[2].render.fillStyle = current.bar;
+      if (bodies[3]) bodies[3].render.fillStyle = current.triangle;
+      if (bodies[4]) bodies[4].render.fillStyle = current.hexagon;
+    }
+  }, [palette]);
 
   return (
     <div

@@ -1,9 +1,49 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import PhysicsCanvas, {
   type ContainerShape,
+  type Palette,
 } from "../components/PhysicsCanvas";
+
+const palettes: Palette[] = [
+  {
+    id: "original",
+    container: "#8B7EA8",
+    square: "#8FBA8F",
+    bar: "#2E4A8B",
+    triangle: "#E8894A",
+    hexagon: "#ADD8E6",
+    background: "#FCFCFC",
+  },
+  {
+    id: "ember",
+    container: "#2C2420",
+    square: "#C94F2C",
+    bar: "#E8C170",
+    triangle: "#8B3A3A",
+    hexagon: "#F2A65A",
+    background: "#F5EFE6",
+  },
+  {
+    id: "constructivist",
+    container: "#1A1A1A",
+    square: "#D4351C",
+    bar: "#F5F5F0",
+    triangle: "#F2C12E",
+    hexagon: "#3A3A3A",
+    background: "#E8E0D5",
+  },
+  {
+    id: "glacier",
+    container: "#4A6FA5",
+    square: "#E8EEF4",
+    bar: "#1B2A3B",
+    triangle: "#7FB5C1",
+    hexagon: "#B8D4E3",
+    background: "#F0F4F8",
+  },
+];
 
 export default function Home() {
   const [speedLevel, setSpeedLevel] = useState<1 | 2 | 3>(1);
@@ -13,6 +53,30 @@ export default function Home() {
   const [isPlaying, setIsPlaying] = useState(true);
   const [rotationReversed, setRotationReversed] = useState(false);
   const [resetKey, setResetKey] = useState(0);
+  const [selectedPaletteId, setSelectedPaletteId] =
+    useState<Palette["id"]>("original");
+  const [isPaletteOpen, setIsPaletteOpen] = useState(false);
+
+  const paletteWrapperRef = useRef<HTMLDivElement | null>(null);
+
+  const selectedPalette =
+    palettes.find((p) => p.id === selectedPaletteId) ?? palettes[0];
+
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (
+        paletteWrapperRef.current &&
+        !paletteWrapperRef.current.contains(event.target as Node)
+      ) {
+        setIsPaletteOpen(false);
+      }
+    };
+
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, []);
 
   const handleReset = () => {
     setResetKey((key) => key + 1);
@@ -92,6 +156,87 @@ export default function Home() {
                   <path d="M12 4V1L8 5l4 4V6c3.31 0 6 2.69 6 6s-2.69 6-6 6-6-2.69-6-6H4c0 4.42 3.58 8 8 8s8-3.58 8-8-3.58-8-8-8z" />
                 </svg>
               </button>
+              </div>
+            </div>
+
+            <div className="space-y-2">
+              <label className="block text-xs text-neutral-300">
+                Palette
+              </label>
+              <div ref={paletteWrapperRef} className="relative">
+                <button
+                  type="button"
+                  onClick={() => setIsPaletteOpen((open) => !open)}
+                  className="w-full h-11 border border-neutral-800 bg-[#111111] text-left"
+                  aria-label="Select palette"
+                >
+                  <div className="flex h-full w-full items-stretch">
+                    <div className="flex flex-1 h-full">
+                      {[
+                        selectedPalette.container,
+                        selectedPalette.square,
+                        selectedPalette.bar,
+                        selectedPalette.triangle,
+                        selectedPalette.hexagon,
+                      ].map((color) => (
+                        <div
+                          key={color}
+                          className="flex-1 h-full"
+                          style={{ backgroundColor: color }}
+                        />
+                      ))}
+                    </div>
+                    <div className="w-8 border-l border-neutral-800 bg-[#111111] flex items-center justify-center">
+                      <span
+                        className="text-xs text-neutral-300"
+                        style={{
+                          display: "inline-block",
+                          transform: isPaletteOpen ? "rotate(180deg)" : "rotate(0deg)",
+                          transition: "transform 0.2s ease",
+                        }}
+                      >
+                        ▾
+                      </span>
+                    </div>
+                  </div>
+                </button>
+
+                {isPaletteOpen && (
+                  <div className="absolute left-0 right-0 mt-1 border border-neutral-800 bg-[#111111] z-10">
+                    {palettes.map((palette) => (
+                      <button
+                        key={palette.id}
+                        type="button"
+                        onClick={() => {
+                          setSelectedPaletteId(palette.id);
+                          setIsPaletteOpen(false);
+                        }}
+                        className="relative flex h-11 w-full items-stretch"
+                      >
+                        <div className="flex flex-1 h-full">
+                          {[
+                            palette.container,
+                            palette.square,
+                            palette.bar,
+                            palette.triangle,
+                            palette.hexagon,
+                          ].map((color) => (
+                            <div
+                              key={color}
+                              className="flex-1 h-full"
+                              style={{ backgroundColor: color }}
+                            />
+                          ))}
+                        </div>
+                        {palette.id === selectedPaletteId && (
+                          <div className="absolute inset-y-0 right-0 flex items-center pr-2">
+                            <span className="text-xs text-white">✓</span>
+                          </div>
+                        )}
+                      </button>
+                    ))}
+                  </div>
+                )}
               </div>
             </div>
 
@@ -178,6 +323,7 @@ export default function Home() {
           resetKey={resetKey}
           isRunning={isPlaying}
           rotationReversed={rotationReversed}
+          palette={selectedPalette}
         />
       </section>
     </main>
