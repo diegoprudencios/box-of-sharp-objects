@@ -8,40 +8,22 @@ import PhysicsCanvas, {
 
 const palettes: Palette[] = [
   {
-    id: "original",
-    container: "#8B7EA8",
-    square: "#8FBA8F",
-    bar: "#2E4A8B",
-    triangle: "#E8894A",
-    hexagon: "#ADD8E6",
-    background: "#FCFCFC",
-  },
-  {
-    id: "ember",
-    container: "#2C2420",
-    square: "#C94F2C",
-    bar: "#E8C170",
-    triangle: "#8B3A3A",
-    hexagon: "#F2A65A",
-    background: "#F5EFE6",
-  },
-  {
     id: "constructivist",
     container: "#1A1A1A",
-    square: "#D4351C",
-    bar: "#F5F5F0",
-    triangle: "#F2C12E",
-    hexagon: "#3A3A3A",
-    background: "#E8E0D5",
+    square: "#F5F5F0",
+    bar: "#1B4BA8",
+    triangle: "#1A6B3A",
+    hexagon: "#B01A1A",
+    background: "#E7E0D6",
   },
   {
-    id: "glacier",
-    container: "#4A6FA5",
-    square: "#E8EEF4",
-    bar: "#1B2A3B",
-    triangle: "#7FB5C1",
-    hexagon: "#B8D4E3",
-    background: "#F0F4F8",
+    id: "original",
+    container: "#8B7EA8",
+    square: "#ADD8E6",
+    bar: "#E8894A",
+    triangle: "#8FBA8F",
+    hexagon: "#2E4A8B",
+    background: "#E7E0D6",
   },
 ];
 
@@ -178,9 +160,9 @@ export default function Home() {
                         selectedPalette.bar,
                         selectedPalette.triangle,
                         selectedPalette.hexagon,
-                      ].map((color) => (
+                      ].map((color, index) => (
                         <div
-                          key={color}
+                          key={index}
                           className="flex-1 h-full"
                           style={{ backgroundColor: color }}
                         />
@@ -220,19 +202,14 @@ export default function Home() {
                             palette.bar,
                             palette.triangle,
                             palette.hexagon,
-                          ].map((color) => (
+                          ].map((color, index) => (
                             <div
-                              key={color}
+                              key={index}
                               className="flex-1 h-full"
                               style={{ backgroundColor: color }}
                             />
                           ))}
                         </div>
-                        {palette.id === selectedPaletteId && (
-                          <div className="absolute inset-y-0 right-0 flex items-center pr-2">
-                            <span className="text-xs text-white">✓</span>
-                          </div>
-                        )}
                       </button>
                     ))}
                   </div>

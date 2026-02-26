@@ -20,7 +20,7 @@ const GOLD_COLOR = "#F5C518";
 export type ContainerShape = "square" | "hexagon" | "circle";
 
 export type Palette = {
-  id: "original" | "ember" | "constructivist" | "glacier";
+  id: "original" | "ember" | "constructivist";
   container: string;
   square: string;
   bar: string;
