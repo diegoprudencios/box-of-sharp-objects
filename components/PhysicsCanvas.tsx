@@ -288,9 +288,9 @@ export default function PhysicsCanvas({
     const circleStartY = centerY - half + wallThickness + goldRadius * 2;
 
     const goldCircle = Bodies.circle(centerX, circleStartY, goldRadius, {
-      restitution: 0.3,
+      restitution: 0.8,
       friction: 0.6,
-      frictionAir: 0.01,
+      frictionAir: 0.003,
       density: 0.8,
       render: { fillStyle: GOLD_COLOR },
     });
@@ -310,9 +310,9 @@ export default function PhysicsCanvas({
       squareSize,
       squareSize,
       {
-        restitution: 0.3,
+        restitution: 0.8,
         friction: 0.7,
-        frictionAir: 0.015,
+        frictionAir: 0.003,
         density: density * 1.1,
         render: { fillStyle: currentPalette.square },
       }
@@ -325,9 +325,9 @@ export default function PhysicsCanvas({
     const barHeight = base * 0.06;
     const barX = centerX + (Math.random() * 2 - 1) * horizontalRange;
     const barBody = Bodies.rectangle(barX, spawnBaseY, barWidth, barHeight, {
-      restitution: 0.3,
+      restitution: 0.8,
       friction: 0.7,
-      frictionAir: 0.015,
+      frictionAir: 0.003,
       density: density * 1.1,
         render: { fillStyle: currentPalette.bar },
     });
@@ -343,9 +343,9 @@ export default function PhysicsCanvas({
       { x: triX + triRadius * Math.cos(-Math.PI / 2 + (4 * Math.PI) / 3), y: spawnBaseY + triRadius * Math.sin(-Math.PI / 2 + (4 * Math.PI) / 3) },
     ];
     const triBody = Bodies.fromVertices(triX, spawnBaseY, [triVerts], {
-      restitution: 0.3,
+      restitution: 0.8,
       friction: 0.7,
-      frictionAir: 0.015,
+      frictionAir: 0.003,
       density: density * 1.1,
         render: { fillStyle: currentPalette.triangle },
     });
@@ -364,9 +364,9 @@ export default function PhysicsCanvas({
       });
     }
     const hexBody = Bodies.fromVertices(hexX, spawnBaseY, [hexVerts], {
-      restitution: 0.3,
+      restitution: 0.8,
       friction: 0.7,
-      frictionAir: 0.015,
+      frictionAir: 0.003,
       density: density * 1.1,
         render: { fillStyle: currentPalette.hexagon },
     });
