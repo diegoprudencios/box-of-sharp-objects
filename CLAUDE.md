@@ -117,6 +117,8 @@ Background geometry must match container shape exactly:
 - Square → rectangle sensor
 - Hexagon → fromVertices polygon sensor
 - Circle → Bodies.circle sensor
+Wall render color must always match palette.background — walls are
+never meant to be visible. Container fill comes from the sensor body only.
 
 ---
 
