@@ -11,7 +11,7 @@ const palettes: Palette[] = [
     id: "constructivist",
     name: "Constructivist",
     container: "#1A1A1A",
-    square: "#F5F5F0",
+    square: "#1B4BA8",
     bar: "#1B4BA8",
     triangle: "#1A6B3A",
     hexagon: "#B01A1A",
@@ -155,7 +155,6 @@ export default function Home() {
                     {[
                       selectedPalette.container,
                       selectedPalette.square,
-                      selectedPalette.bar,
                       selectedPalette.triangle,
                       selectedPalette.hexagon,
                     ].map((color, index) => (
@@ -198,7 +197,6 @@ export default function Home() {
                         {[
                           palette.container,
                           palette.square,
-                          palette.bar,
                           palette.triangle,
                           palette.hexagon,
                         ].map((color, index) => (
