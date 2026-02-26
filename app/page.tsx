@@ -6,7 +6,7 @@ import PhysicsCanvas, {
 } from "../components/PhysicsCanvas";
 
 export default function Home() {
-  const [rotationSpeed, setRotationSpeed] = useState(0.3);
+  const [speedLevel, setSpeedLevel] = useState<1 | 2 | 3>(1);
   const [shapeCount, setShapeCount] = useState(6);
   const [containerShape, setContainerShape] =
     useState<ContainerShape>("square");
@@ -29,54 +29,69 @@ export default function Home() {
           </div>
 
           <div className="space-y-6 text-sm">
-            <div className="flex flex-row items-center gap-5">
-              <div className="flex min-w-0 flex-1 flex-col space-y-2">
-                <label className="flex items-center justify-between text-xs text-neutral-300">
-                  <span>Speed</span>
-                  <span className="tabular-nums text-neutral-500">
-                    {rotationSpeed.toFixed(2)}
-                  </span>
-                </label>
-                <input
-                  type="range"
-                  min={0}
-                  max={2}
-                  step={0.01}
-                  value={rotationSpeed}
-                  onChange={(e) =>
-                    setRotationSpeed(parseFloat(e.target.value) || 0)
-                  }
-                  className="w-full accent-neutral-100"
-                />
-              </div>
-              <div className="flex flex-none items-center gap-2">
-                <button
-                  type="button"
-                  onClick={() => setIsPlaying((p) => !p)}
-                  className="flex h-10 w-10 items-center justify-center rounded-full bg-[#222222] text-white transition-colors hover:bg-[#333333]"
-                  aria-label={isPlaying ? "Pause" : "Play"}
-                >
-                  {isPlaying ? (
-                    <svg viewBox="0 0 24 24" className="h-5 w-5" fill="currentColor">
-                      <rect x="8" y="6" width="3" height="12" rx="0.5" />
-                      <rect x="13" y="6" width="3" height="12" rx="0.5" />
-                    </svg>
-                  ) : (
-                    <svg viewBox="0 0 24 24" className="h-5 w-5" fill="currentColor">
-                      <path d="M8 5v14l11-7z" />
-                    </svg>
-                  )}
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setRotationReversed((r) => !r)}
-                  className="flex h-10 w-10 items-center justify-center rounded-full bg-[#222222] text-white transition-colors hover:bg-[#333333]"
-                  aria-label={rotationReversed ? "Forward rotation" : "Reverse rotation"}
-                >
-                  <svg viewBox="0 0 24 24" className="h-5 w-5" fill="currentColor" style={{ transform: "scaleX(-1)" }}>
-                    <path d="M12 4V1L8 5l4 4V6c3.31 0 6 2.69 6 6s-2.69 6-6 6-6-2.69-6-6H4c0 4.42 3.58 8 8 8s8-3.58 8-8-3.58-8-8-8z" />
+            <div className="space-y-2">
+              <label className="block text-xs text-neutral-300">
+                Speed and rotation
+              </label>
+              <div className="flex flex-row gap-2">
+              <button
+                type="button"
+                onClick={() =>
+                  setSpeedLevel((s) => (s === 3 ? 1 : (s + 1) as 1 | 2 | 3))
+                }
+                className="group flex h-12 flex-1 items-center justify-center bg-[#1A1A1A] text-white transition-colors hover:bg-neutral-800 rounded-none"
+                aria-label={`Speed ${speedLevel}x`}
+              >
+                <span className="text-xs font-medium tabular-nums">
+                  {speedLevel}x
+                </span>
+              </button>
+              <button
+                type="button"
+                onClick={() => setIsPlaying((p) => !p)}
+                className="group flex h-12 flex-1 items-center justify-center bg-[#1A1A1A] text-white transition-colors hover:bg-neutral-800 rounded-none"
+                aria-label={isPlaying ? "Pause" : "Play"}
+              >
+                {isPlaying ? (
+                  <svg
+                    viewBox="0 0 24 24"
+                    className="h-5 w-5"
+                    fill="currentColor"
+                  >
+                    <rect x="8" y="6" width="3" height="12" rx="0.5" />
+                    <rect x="13" y="6" width="3" height="12" rx="0.5" />
                   </svg>
-                </button>
+                ) : (
+                  <svg
+                    viewBox="0 0 24 24"
+                    className="h-5 w-5"
+                    fill="currentColor"
+                  >
+                    <path d="M8 5v14l11-7z" />
+                  </svg>
+                )}
+              </button>
+              <button
+                type="button"
+                onClick={() => setRotationReversed((r) => !r)}
+                className="group flex h-12 flex-1 items-center justify-center bg-[#1A1A1A] text-white transition-colors hover:bg-neutral-800 rounded-none"
+                aria-label={
+                  rotationReversed ? "Forward rotation" : "Reverse rotation"
+                }
+              >
+                <svg
+                  viewBox="0 0 24 24"
+                  className="h-5 w-5"
+                  fill="currentColor"
+                  style={
+                    rotationReversed
+                      ? { transform: "scaleX(-1)", transition: "transform 0.3s ease" }
+                      : { transform: "scaleX(1)", transition: "transform 0.3s ease" }
+                  }
+                >
+                  <path d="M12 4V1L8 5l4 4V6c3.31 0 6 2.69 6 6s-2.69 6-6 6-6-2.69-6-6H4c0 4.42 3.58 8 8 8s8-3.58 8-8-3.58-8-8-8z" />
+                </svg>
+              </button>
               </div>
             </div>
 
@@ -157,7 +172,7 @@ export default function Home() {
 
       <section className="flex-1 h-screen">
         <PhysicsCanvas
-          rotationSpeed={rotationSpeed}
+          rotationSpeed={speedLevel === 1 ? 0.6 : speedLevel === 2 ? 1.2 : 1.8}
           shapeCount={shapeCount}
           containerShape={containerShape}
           resetKey={resetKey}

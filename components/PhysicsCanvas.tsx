@@ -41,6 +41,7 @@ export default function PhysicsCanvas({
   const sceneRef = useRef<HTMLDivElement | null>(null);
   const isRunningRef = useRef(isRunning);
   const rotationReversedRef = useRef(rotationReversed);
+  const rotationSpeedRef = useRef(rotationSpeed);
 
   useEffect(() => {
     isRunningRef.current = isRunning;
@@ -49,6 +50,10 @@ export default function PhysicsCanvas({
   useEffect(() => {
     rotationReversedRef.current = rotationReversed;
   }, [rotationReversed]);
+
+  useEffect(() => {
+    rotationSpeedRef.current = rotationSpeed;
+  }, [rotationSpeed]);
 
   useEffect(() => {
     const element = sceneRef.current;
@@ -351,13 +356,13 @@ export default function PhysicsCanvas({
 
     // Rotation state
     let angle = 0;
-    const angleStep = rotationSpeed * (Math.PI / 180);
 
     Events.on(engine, "beforeUpdate", () => {
       if (!isRunningRef.current) {
         return;
       }
 
+      const angleStep = rotationSpeedRef.current * (Math.PI / 180);
       angle += rotationReversedRef.current ? -angleStep : angleStep;
 
       Body.setPosition(backgroundBody, { x: centerX, y: centerY });
@@ -384,7 +389,7 @@ export default function PhysicsCanvas({
           const dx = body.position.x - centerX;
           const dy = body.position.y - centerY;
           const len = Math.sqrt(dx * dx + dy * dy) || 0.0001;
-          const magnitude = body.mass * rotationSpeed * 0.008 * direction;
+          const magnitude = body.mass * rotationSpeedRef.current * 0.008 * direction;
           const tx = -dy / len;
           const ty = dx / len;
           Body.applyForce(body, body.position, {
@@ -414,7 +419,7 @@ export default function PhysicsCanvas({
       clearTimeout(id);
       cleanup?.();
     };
-  }, [rotationSpeed, shapeCount, containerShape, resetKey]);
+  }, [shapeCount, containerShape, resetKey]);
 
   return (
     <div
