@@ -12,7 +12,7 @@ const palettes: Palette[] = [
     name: "Constructivist",
     container: "#1A1A1A",
     square: "#1B4BA8",
-    bar: "#1B4BA8",
+    bar: "#E8894A",
     triangle: "#1A6B3A",
     hexagon: "#B01A1A",
     background: "#E7E0D6",

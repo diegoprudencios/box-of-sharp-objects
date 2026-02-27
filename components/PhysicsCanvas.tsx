@@ -288,7 +288,7 @@ export default function PhysicsCanvas({
     const circleStartY = centerY - half + wallThickness + goldRadius * 2;
 
     const goldCircle = Bodies.circle(centerX, circleStartY, goldRadius, {
-      restitution: 0.8,
+      restitution: 0.75,
       friction: 0.6,
       frictionAir: 0.003,
       density: 0.8,
@@ -301,8 +301,9 @@ export default function PhysicsCanvas({
     const horizontalRange = size * 0.25;
     const density = 1.2;
 
-    // Square: side = base * 0.14, sage green
-    const squareSize = base * 0.14;
+    // Square: side = base * 0.14 * scale
+    const squareScale = 0.8 + Math.random() * 0.4;
+    const squareSize = base * 0.14 * squareScale;
     const squareX = centerX + (Math.random() * 2 - 1) * horizontalRange;
     const squareBody = Bodies.rectangle(
       squareX,
@@ -310,8 +311,8 @@ export default function PhysicsCanvas({
       squareSize,
       squareSize,
       {
-        restitution: 0.8,
-        friction: 0.7,
+        restitution: 0.75,
+        friction: 0.4,
         frictionAir: 0.003,
         density: density * 1.1,
         render: { fillStyle: currentPalette.square },
@@ -320,13 +321,14 @@ export default function PhysicsCanvas({
     Body.setAngle(squareBody, (Math.random() - 0.5) * Math.PI * 0.5);
     dynamicBodies.push(squareBody);
 
-    // Bar: width = base * 0.40, height = base * 0.06, navy
-    const barWidth = base * 0.4;
-    const barHeight = base * 0.06;
+    // Bar: width = base * 0.40 * scale, height = base * 0.06 * scale
+    const barScale = 0.8 + Math.random() * 0.4;
+    const barWidth = base * 0.4 * barScale;
+    const barHeight = base * 0.06 * barScale;
     const barX = centerX + (Math.random() * 2 - 1) * horizontalRange;
     const barBody = Bodies.rectangle(barX, spawnBaseY, barWidth, barHeight, {
-      restitution: 0.8,
-      friction: 0.7,
+      restitution: 0.75,
+      friction: 0.4,
       frictionAir: 0.003,
       density: density * 1.1,
         render: { fillStyle: currentPalette.bar },
@@ -334,8 +336,9 @@ export default function PhysicsCanvas({
     Body.setAngle(barBody, (Math.random() - 0.5) * Math.PI * 0.5);
     dynamicBodies.push(barBody);
 
-    // Triangle: circumradius = base * 0.16, orange
-    const triRadius = base * 0.16;
+    // Triangle: circumradius = base * 0.16 * scale
+    const triScale = 0.8 + Math.random() * 0.4;
+    const triRadius = base * 0.16 * triScale;
     const triX = centerX + (Math.random() * 2 - 1) * horizontalRange;
     const triVerts = [
       { x: triX + triRadius * Math.cos(-Math.PI / 2), y: spawnBaseY + triRadius * Math.sin(-Math.PI / 2) },
@@ -343,8 +346,8 @@ export default function PhysicsCanvas({
       { x: triX + triRadius * Math.cos(-Math.PI / 2 + (4 * Math.PI) / 3), y: spawnBaseY + triRadius * Math.sin(-Math.PI / 2 + (4 * Math.PI) / 3) },
     ];
     const triBody = Bodies.fromVertices(triX, spawnBaseY, [triVerts], {
-      restitution: 0.8,
-      friction: 0.7,
+      restitution: 0.75,
+      friction: 0.4,
       frictionAir: 0.003,
       density: density * 1.1,
         render: { fillStyle: currentPalette.triangle },
@@ -352,8 +355,9 @@ export default function PhysicsCanvas({
     Body.setAngle(triBody, (Math.random() - 0.5) * Math.PI * 0.5);
     dynamicBodies.push(triBody);
 
-    // Hexagon: circumradius = base * 0.24 (largest), light blue
-    const hexRadius = base * 0.24;
+    // Hexagon: circumradius = base * 0.24 * scale
+    const hexScale = 0.8 + Math.random() * 0.4;
+    const hexRadius = base * 0.24 * hexScale;
     const hexX = centerX + (Math.random() * 2 - 1) * horizontalRange;
     const hexVerts: { x: number; y: number }[] = [];
     for (let i = 0; i < 6; i += 1) {
@@ -364,14 +368,31 @@ export default function PhysicsCanvas({
       });
     }
     const hexBody = Bodies.fromVertices(hexX, spawnBaseY, [hexVerts], {
-      restitution: 0.8,
-      friction: 0.7,
+      restitution: 0.75,
+      friction: 0.4,
       frictionAir: 0.003,
       density: density * 1.1,
         render: { fillStyle: currentPalette.hexagon },
     });
     Body.setAngle(hexBody, (Math.random() - 0.5) * Math.PI * 0.5);
     dynamicBodies.push(hexBody);
+
+    const shapeEntries = [
+      { body: squareBody, scale: squareScale },
+      { body: barBody, scale: barScale },
+      { body: triBody, scale: triScale },
+      { body: hexBody, scale: hexScale },
+    ];
+    const shapeColors = [
+      currentPalette.square,
+      currentPalette.bar,
+      currentPalette.triangle,
+      currentPalette.hexagon,
+    ];
+    shapeEntries.sort((a, b) => a.scale - b.scale);
+    shapeEntries.forEach((entry, i) => {
+      entry.body.render.fillStyle = shapeColors[i];
+    });
 
     Composite.add(world, [
       backgroundBody,

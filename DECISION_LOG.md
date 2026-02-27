@@ -500,3 +500,38 @@ Monochromatic palettes need a structural disruptor to work — one shape that br
 
 **Open Questions**
 Whether a fourth palette should be added in a future session.
+
+---
+
+## Entry 018 — Container Bump Feedback (Paused) — 26 Feb 2026
+
+**Context**
+Explored adding a small visual “bump” to the container when a shape hits the wall — e.g. container shifts slightly down — to make motion feel more organic and reactive.
+
+**Problem**
+Initial implementation caused shaky, glitchy motion. Later tuning (bigger displacement, “Disney”-smooth feel) still didn’t read clearly. Feature was paused and all related code removed.
+
+**Options Considered**
+— Collision-driven offset with decay only (too many collision events → stacking)
+— One add per frame + cooldown (reduced jitter)
+— Display lerp (smooth applied offset) + slower decay (softer motion)
+— Scaling bump to container size (fixed pixels invisible on large canvas)
+— Keeping the feature with further tuning vs removing and documenting learnings
+
+**Decision**
+Remove all bump/collision-feedback code for now. Document learnings in this log for a possible future retry.
+
+**Rationale**
+The experiment produced clear technical learnings but no shipping-ready behaviour in this session. Keeping half-finished logic in the codebase would add maintenance and confusion. Capturing what worked and what didn’t preserves value without leaving dead code.
+
+**Outcome**
+Bounce feature removed. Container again uses fixed center only. DECISION_LOG updated with this entry.
+
+**Key Learnings**
+— Matter.js `collisionStart` can fire many times per physical bounce (multiple contacts/frames). Rate-limit: e.g. one add per frame via a flag, and a short cooldown (e.g. 100–150 ms) so one impact doesn’t stack.
+— Apply the bump to a “target” value, then lerp a separate “display” offset toward it each frame. Use the display offset for container position. That smooths both the hit and the return and avoids harsh snaps.
+— Any visual feedback in world units must scale with container or canvas size (e.g. bump strength/max as a fraction of `size`). Fixed pixel values are invisible on large viewports.
+— If we re-add this later: collision listener → set flag; in beforeUpdate add to target once per frame when not in cooldown; decay target; lerp display toward target; use display for center. Remove listener in cleanup.
+
+**Open Questions**
+Whether to re-attempt container bump feedback in a future session with the above pattern, or leave the interaction as-is.
